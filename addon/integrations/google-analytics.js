@@ -1,13 +1,15 @@
-import $ from 'jquery'
+import $ from 'jquery';
 
-import Base from 'ember-cli-analytics/integrations/base'
-import canUseDOM from 'ember-cli-analytics/utils/can-use-dom'
+import Base from 'ember-cli-analytics/integrations/base';
+import canUseDOM from 'ember-cli-analytics/utils/can-use-dom';
+import without from 'ember-cli-analytics/utils/without';
 
-import { assert } from '@ember/debug'
-import { get } from '@ember/object'
-import { on } from '@ember/object/evented'
-import { assign } from '@ember/polyfills'
-import { capitalize } from '@ember/string'
+import { assert } from '@ember/debug';
+import { get } from '@ember/object';
+import { on } from '@ember/object/evented';
+import { assign } from '@ember/polyfills';
+import { capitalize } from '@ember/string';
+import { isPresent } from '@ember/utils';
 
 export default Base.extend({
 
@@ -20,13 +22,12 @@ export default Base.extend({
    * @param {Object} options
    *   Options to send the analytics engine.
    */
-  trackPage (options = {}) {
+  trackPage(options = {}) {
+    const sendEvent = { hitType: 'pageview' };
+    const event = assign({}, sendEvent, options);
+
     if (canUseDOM) {
-      console.log(options)
-      window.gtag('event', 'page_view', {
-        page_title: options.title,
-        page_path: options.page
-      })
+      window.ga('send', event);
     }
   },
 
@@ -39,31 +40,31 @@ export default Base.extend({
    * @param {Object} options
    *   Options to send the analytics engine.
    */
-  trackEvent (options = {}) {
-    const sendEvent = { hitType: 'event' }
-    const gaEvent = {}
+  trackEvent(options = {}) {
+    const sendEvent = { hitType: 'event' };
+    const gaEvent = {};
 
     if (options.nonInteraction) {
-      gaEvent.nonInteraction = options.nonInteraction
-      delete options.nonInteraction
+      gaEvent.nonInteraction = options.nonInteraction;
+      delete options.nonInteraction;
     }
 
     for (let key in options) {
-      const value = options[key]
+      const value = options[key];
 
       // If key is not a 'dimension' or 'metric', prepend with 'event'
-      const shouldPrefix = !/^(dimension|metric)[0-9]{1,2}/.test(key)
+      const shouldPrefix = !/^(dimension|metric)[0-9]{1,2}/.test(key);
       if (shouldPrefix) {
-        key = `event${capitalize(key)}`
+        key = `event${capitalize(key)}`;
       }
 
-      gaEvent[key] = value
+      gaEvent[key] = value;
     }
 
-    const event = assign({}, sendEvent, gaEvent)
+    const event = assign({}, sendEvent, gaEvent);
 
-    if (canUseDOM) {
-      window.gtag('event', event)
+    if(canUseDOM) {
+      window.ga('send', event);
     }
   },
 
@@ -81,13 +82,13 @@ export default Base.extend({
    * @param {Object} options
    *   Options to send the analytics engine.
    */
-  identify (options = {}) {
-    const { id } = options
+  identify(options = {}) {
+    const { id } = options;
 
-    assert('You must pass a distinct id', id)
+    assert('You must pass a distinct id', id);
 
     if (canUseDOM) {
-      window.gtag('set', 'userId', id)
+      window.ga('set', 'userId', id);
     }
   },
 
@@ -99,45 +100,47 @@ export default Base.extend({
    * @method insertTag
    * @on init
    */
-  insertTag: on('init', function () {
-    const config = get(this, 'config')
-    const { id, remarketing, ecommerce, enhancedEcommerce, set } = assign({}, config)
+  insertTag: on('init', function() {
+    const config = get(this, 'config');
+    const { id, remarketing, ecommerce, enhancedEcommerce, set } = assign({}, config);
+    const properties = without(config, 'id', 'remarketing', 'ecommerce', 'enhancedEcommerce', 'set');
 
-    assert('You must pass a valid `id` to the GoogleAnaltics adapter', id)
+    assert('You must pass a valid `id` to the GoogleAnaltics adapter', id);
 
     if (!canUseDOM) {
-      return
+      return;
     }
 
-    if (!window.gtag) {
-      (function () {
-        const a = document.createElement('script')
-        const m = document.querySelector('script')
-        a.async = 1
-        a.src = `https://www.googletagmanager.com/gtag/js?id=${id}`
-        m.parentNode.insertBefore(a, m)
-        window.dataLayer = window.dataLayer || []
-        window.gtag = function () { window.dataLayer.push(arguments) }
-        window.gtag('js', new Date())
-        window.gtag('config', id)
-      })()
+    if (!window.ga) {
+      /* eslint-disable */
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+      /* eslint-enable */
+    }
+
+    if (isPresent(Object.keys(properties))) {
+      window.ga('create', id, properties);
+    } else {
+      window.ga('create', id, 'auto');
     }
 
     if (remarketing) {
-      window.gtag('require', 'displayfeatures')
+      window.ga('require', 'displayfeatures');
     }
 
     if (ecommerce) {
-      window.gtag('require', 'ecommerce')
+      window.ga('require', 'ecommerce');
     }
 
     if (enhancedEcommerce) {
-      window.gtag('require', 'ecommerce')
+      window.ga('require', 'ecommerce');
     }
 
     if (set) {
       for (const attr of Object.keys(set)) {
-        window.gtag('set', attr, set[attr])
+        window.ga('set', attr, set[attr]);
       }
     }
   }),
@@ -150,10 +153,10 @@ export default Base.extend({
    * @method removeTag
    * @on willDestroy
    */
-  removeTag: on('willDestroy', function () {
+  removeTag: on('willDestroy', function() {
     if (canUseDOM) {
-      $('script[src^="https://www.googletagmanager.com"]').remove()
-      delete window.gtag
+      $('script[src*="google-analytics"]').remove();
+      delete window.ga;
     }
   })
-})
+});
