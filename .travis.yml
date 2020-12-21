@@ -1,74 +1,32 @@
 ---
 language: node_js
 node_js:
-  # we recommend testing addons with the same minimum supported node version as Ember CLI
-  # so that your addon works for all apps
-  - "6"
+  - 13
 
-sudo: false
-dist: trusty
+dist: xenial
 
 addons:
   chrome: stable
 
+branches:
+  only:
+    - master
+
 cache:
-  directories:
-    - $HOME/.npm
+  yarn: true
 
 env:
   global:
     # See https://git.io/vdao3 for details.
     - JOBS=1
 
-branches:
-  only:
-    - master
-    # npm version tags
-    - /^v\d+\.\d+\.\d+/
-
-jobs:
-  fail_fast: true
-  allow_failures:
-    - env: EMBER_TRY_SCENARIO=ember-canary
-
-  include:
-    # runs linting and tests with current locked deps
-
-    - stage: "Tests"
-      name: "Tests"
-      script:
-        - npm run lint:hbs
-        - npm run lint:js
-        - npm test
-
-    # we recommend new addons test the current and previous LTS
-    # as well as latest stable release (bonus points to beta/canary)
-    - stage: "Additional Tests"
-      env: EMBER_TRY_SCENARIO=ember-lts-2.18
-    - env: EMBER_TRY_SCENARIO=ember-lts-3.4
-    - env: EMBER_TRY_SCENARIO=ember-release
-    - env: EMBER_TRY_SCENARIO=ember-beta
-    - env: EMBER_TRY_SCENARIO=ember-canary
-    - env: EMBER_TRY_SCENARIO=ember-default-with-jquery
-
 before_install:
-  - npm config set spin false
-  - npm install -g npm@4
-  - npm --version
+  - yarn config set spin false
+  - curl -o- -L https://yarnpkg.com/install.sh | bash
+  - export PATH=$HOME/.yarn/bin:$PATH
+
+install:
+  - yarn install --non-interactive
 
 script:
-  - node_modules/.bin/ember try:one $EMBER_TRY_SCENARIO
-
-notifications:
-  email: false
-  slack:
-    secure: "waisSW5TKLFf7zCfl4nJsXunfzZ1bXG3Q7nlmZlFah5kJagPLjHjXp+2ZI6UwmHeXu64QDYOrkmAjS0n2YF0eOj1eZCKUs2R14JVwrBeCDHD9dH0/MNLQdM8/msUbAq9k7skuXvxiWW/XyfHG9P9s6EOBWeDOls80WdxWB2s52Y41ipDnEH6I4fP+m9FkBAr3jfe+lSGvoi6Us2OcAvOI5lc6ObBq7isTXquuUFPIG1LUm1lE1S6G/wXhdwe/NwNEs8zmGRqmc+AAumR67+Sbu/Gv7nYNskJenUwXkTAOqAsrGZ863bBcJIklqXgYAWp91XiJEXNCdnB7N6JaYIRHEn/bz2hsPjU252qafm5DQtgiePIEPyLeZz7RbZfnfjI/5gi4bJF2mltQ8yiK0ABWQIuHrs+N8sqqxaCTdx7hzluVmM/2EsnKmoVSboIRXdRYNA7i+0eztde6/HeyKTPp4XQp2uYZRirZyJFZe2bKpLOtH53MF+ik1Jh1gX36RxKIqb6i/h0NZIBxrxEON/PR2M10ghz8lPKOGVn+nha59/0lfz6FociE+wcj9YOecr5RPes+wxEjE+xxBFzT3A8r/8BDx66vzNyyHCk1niTPM1yJfNvKgzt2VbfeOiS3nHBWbxl2O9autZhommtKkQ61WadsPVwckGDkaMMxEFs6gM="
-
-deploy:
-  provider: npm
-  email: me@tomasbasham.co.uk
-  api_key:
-    secure: "2CbWQydO6r7sZ7H/S8MBO2pPomVHMm9WBtQl/YXfqDPtOEFje5PamiznWdb2xYi6G4y4Yn5axh2BZ/U1rb7f2otjyp67tVfAwh+cPAxcAv0kaqYvX6gJj1kGZ45auIDITKaWEhO/Zgjwpljolvq5b5l5jsVR1P1O4xT8NOQFPSVXhNIgZB3cjhlU1Y7IDwAG76XQ8Y636TMhD8ba1Fyr+nubQOeHX8MEMh+A/N6IRvEor0ZcrCmJymt30BzZ0TQg0QPaEp+XAgbN35OjJQKqDmRAJz1lK8qi3xLlpVYZTYG4+U1oEeamqrVzYiouq8TDMpCoB6FDs1uEVvLMLs7ySfYNz4GCavM8PDT1T5f875BKPfmiT1CUEqSisQ9sHJmatg0JpZMU+46SEJl8TlFfdw5VpFqMVhlf9lMo1LepM93g+hfZSwpYgeQUeMZGBVNeY3e0sUVF4Yw1Xw6hVdovVCc0tiy65YRsEw9d7t+JQCqyJ/xfSfKRi/oNl4IkXD/yTCSquCaOuapx4C/D2F5/pVnJlPQMTOanJEoYbIyHMCmVjns3U0xID4Pisbv1s8s+Wxez/e0KTiCdL82efphW3/Fu2MRThhQu0kbjs2MIGouH+LxYtMNtsribARjgNXdqprHIABCCVTE9GQ/zEQhCBNQ6dVWRrSjeI35QWkT378c="
-  on:
-    tags: true
-    repo: tomasbasham/ember-cli-analytics
+  - yarn test
