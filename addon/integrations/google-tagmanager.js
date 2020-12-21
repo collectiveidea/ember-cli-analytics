@@ -22,7 +22,6 @@ export default Base.extend({
    */
   trackPage (options = {}) {
     if (canUseDOM) {
-      console.log(options)
       window.gtag('event', 'page_view', {
         page_title: options.title,
         page_path: options.page
