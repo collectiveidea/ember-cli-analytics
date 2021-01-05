@@ -21,6 +21,7 @@ export default Base.extend({
    *   Options to send the analytics engine.
    */
   trackPage (options = {}) {
+    console.log(options)
     if (canUseDOM) {
       window.gtag('event', 'page_view', {
         page_title: options.title,
@@ -39,6 +40,7 @@ export default Base.extend({
    *   Options to send the analytics engine.
    */
   trackEvent (options = {}) {
+    console.log(options)
     const sendEvent = { hitType: 'event' }
     const gaEvent = {}
 
@@ -102,7 +104,7 @@ export default Base.extend({
     const config = get(this, 'config')
     const { id, remarketing, ecommerce, enhancedEcommerce, set } = assign({}, config)
 
-    assert('You must pass a valid `id` to the GoogleAnaltics adapter', id)
+    assert('You must pass a valid `id` to the GoogleTagmanager adapter', id)
 
     if (!canUseDOM) {
       return
